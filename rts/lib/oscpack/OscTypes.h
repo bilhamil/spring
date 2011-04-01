@@ -49,7 +49,7 @@ typedef unsigned long long uint64;
 
 
 
-#ifdef x86_64
+#ifdef __x86_64__
 
 typedef signed int int32;
 typedef unsigned int uint32;
@@ -120,9 +120,9 @@ extern MessageTerminator EndMessage;
 struct NilType{
 };
 
-extern NilType Nil;
+//extern NilType Nil;
 
-
+	
 struct InfinitumType{
 };
 
