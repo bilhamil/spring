@@ -9,7 +9,7 @@
  *
  * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  */
@@ -23,9 +23,9 @@ static char rcsid[] = "$NetBSD: e_acosf.c,v 1.5f 1995/05/12 04:57:16 jtc Exp $";
 
 namespace streflop_libm {
 #ifdef __STDC__
-static const Simple 
+static const Simple
 #else
-static Simple 
+static Simple
 #endif
 one =  1.0000000000e+00f, /* 0x3F800000 */
 pi =  3.1415925026e+00f, /* 0x40490fda */

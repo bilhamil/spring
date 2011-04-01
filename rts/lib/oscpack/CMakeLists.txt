@@ -1,6 +1,10 @@
 # Spring supplied CMake build file
 
-SET(OSCPACK_SRC_ROOT "${ENGINE_SRC_ROOT_DIR}/lib/oscpack")
+IF (WIN32)
+    SET(ipsubdir "win32")
+ELSE (WIN32)
+    SET(ipsubdir "posix")
+ENDIF (WIN32)
 
 SET(oscpackSources
 		"OscOutboundPacketStream"
@@ -8,12 +12,12 @@ SET(oscpackSources
 		"OscPrintReceivedElements"
 		"OscReceivedElements"
 		"ip/IpEndpointName"
-		"ip/NetworkingUtils"
-		"ip/UdpSocket"
+		"ip/${ipsubdir}/NetworkingUtils"
+		"ip/${ipsubdir}/UdpSocket"
 	)
 
-	
-INCLUDE_DIRECTORIES( ./ip )
+
+INCLUDE_DIRECTORIES( ${OSCPACK_SRC_ROOT}/ip )
 
 ADD_LIBRARY(oscpack STATIC EXCLUDE_FROM_ALL ${oscpackSources})
 IF (APPLE)

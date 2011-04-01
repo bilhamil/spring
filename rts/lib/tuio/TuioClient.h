@@ -1,19 +1,19 @@
 /*
  TUIO C++ Library - part of the reacTIVision project
  http://reactivision.sourceforge.net/
- 
+
  Copyright (c) 2005-2009 Martin Kaltenbrunner <mkalten@iua.upf.edu>
- 
+
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation; either version 2 of the License, or
  (at your option) any later version.
- 
+
  This program is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
- 
+
  You should have received a copy of the GNU General Public License
  along with this program; if not, write to the Free Software
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -34,22 +34,22 @@
 #include <algorithm>
 #include <cstring>
 
-#include "osc/OscReceivedElements.h"
-#include "osc/OscPrintReceivedElements.h"
+#include "OscReceivedElements.h"
+#include "OscPrintReceivedElements.h"
 
-#include "ip/UdpSocket.h"
-#include "ip/PacketListener.h"
+#include "UdpSocket.h"
+#include "PacketListener.h"
 
 #include "TuioListener.h"
 #include "TuioObject.h"
 #include "TuioCursor.h"
 
 namespace TUIO {
-	
+
 	/**
 	 * <p>The TuioClient class is the central TUIO protocol decoder component. It provides a simple callback infrastructure using the {@link TuioListener} interface.
 	 * In order to receive and decode TUIO messages an instance of TuioClient needs to be created. The TuioClient instance then generates TUIO events
-	 * which are broadcasted to all registered classes that implement the {@link TuioListener} interface.</p> 
+	 * which are broadcasted to all registered classes that implement the {@link TuioListener} interface.</p>
 	 * <p><code>
 	 * TuioClient *client = new TuioClient();<br/>
 	 * client->addTuioListener(myTuioListener);<br/>
@@ -58,9 +58,9 @@ namespace TUIO {
 	 *
 	 * @author Martin Kaltenbrunner
 	 * @version 1.4
-	 */ 
-	class TuioClient : public PacketListener { 
-		
+	 */
+	class TuioClient : public PacketListener {
+
 	public:
 		/**
 		 * This constructor creates a TuioClient that listens to the provided port
@@ -70,10 +70,10 @@ namespace TUIO {
 		TuioClient(int port=3333);
 
 		/**
-		 * The destructor is doing nothing in particular. 
+		 * The destructor is doing nothing in particular.
 		 */
 		~TuioClient();
-		
+
 		/**
 		 * The TuioClient starts listening to TUIO messages on the configured UDP port
 		 * All received TUIO messages are decoded and the resulting TUIO events are broadcasted to all registered TuioListeners
@@ -92,7 +92,7 @@ namespace TUIO {
 		 * @return	true if this TuioClient is currently connected
 		 */
 		bool isConnected() { return connected; }
-				
+
 		/**
 		 * Adds the provided TuioListener to the list of registered TUIO event listeners
 		 *
@@ -110,7 +110,7 @@ namespace TUIO {
 		/**
 		 * Removes all TuioListener from the list of registered TUIO event listeners
 		 */
-		void removeAllTuioListeners() {	
+		void removeAllTuioListeners() {
 			listenerList.clear();
 		}
 
@@ -120,7 +120,7 @@ namespace TUIO {
 		 * @return  a List of all currently active TuioObjects
 		 */
 		std::list<TuioObject*> getTuioObjects();
-		
+
 		/**
 		 * Returns a List of all currently active TuioCursors
 		 *
@@ -166,10 +166,10 @@ namespace TUIO {
 
 		void ProcessPacket( const char *data, int size, const IpEndpointName &remoteEndpoint );
 		UdpListeningReceiveSocket *socket;
-				
+
 	protected:
 		void ProcessBundle( const osc::ReceivedBundle& b, const IpEndpointName& remoteEndpoint);
-		
+
 		/**
 		 * The OSC callback method where all TUIO messages are received and decoded
 		 * and where the TUIO event callbacks are dispatched
@@ -178,21 +178,21 @@ namespace TUIO {
 		 * @param  remoteEndpoint	the received OSC message origin
 		 */
 		void ProcessMessage( const osc::ReceivedMessage& message, const IpEndpointName& remoteEndpoint);
-		
+
 	private:
 		std::list<TuioListener*> listenerList;
-		
+
 		std::list<TuioObject*> objectList, frameObjects;
 		std::list<long> aliveObjectList;
 		std::list<TuioCursor*> cursorList, frameCursors;
 		std::list<long> aliveCursorList;
-		
+
 		osc::int32 currentFrame;
 		TuioTime currentTime;
-			
+
 		std::list<TuioCursor*> freeCursorList, freeCursorBuffer;
 		int maxCursorID;
-		
+
 #ifndef WIN32
 		pthread_t thread;
 		pthread_mutex_t objectMutex;
@@ -202,8 +202,8 @@ namespace TUIO {
 		HANDLE thread;
 		HANDLE objectMutex;
 		HANDLE cursorMutex;
-#endif	
-				
+#endif
+
 		bool locked;
 		bool connected;
 	};
