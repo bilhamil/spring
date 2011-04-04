@@ -34,11 +34,11 @@
 #include <algorithm>
 #include <cstring>
 
-#include "OscReceivedElements.h"
-#include "OscPrintReceivedElements.h"
+#include "lib/oscpack/OscReceivedElements.h"
+#include "lib/oscpack/OscPrintReceivedElements.h"
 
-#include "UdpSocket.h"
-#include "PacketListener.h"
+#include "lib/oscpack/ip/UdpSocket.h"
+#include "lib/oscpack/ip/PacketListener.h"
 
 #include "TuioListener.h"
 #include "TuioObject.h"

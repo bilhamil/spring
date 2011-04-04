@@ -3,7 +3,10 @@
 #ifndef __FREE_CONTROLLER_H__
 #define __FREE_CONTROLLER_H__
 
+#include <map>
 #include "CameraController.h"
+#include "lib/tuio/TuioCursor.h"
+#include "System/myMath.h"
 
 class CFreeController : public CCameraController {
 public:
@@ -19,6 +22,12 @@ public:
 	void MouseMove(float3 move);
 	void ScreenEdgeMove(float3 move);
 	void MouseWheelMove(float move);
+
+    /* tuio updates */
+    void addTuioCursor(TUIO::TuioCursor *tcur);
+    void updateTuioCursor(TUIO::TuioCursor *tcur);
+    void removeTuioCursor(TUIO::TuioCursor *tcur);
+    void tuioRefresh(TUIO::TuioTime ftime);
 
 	bool DisableTrackingByKey() { return false; }
 
@@ -42,6 +51,8 @@ private:
 	float3 prevVel;  // previous velocity
 	float3 prevAvel; // previous angular velocity
 
+	shortint2 lastSinglePoint;
+
 	bool tracking;
 	float3 trackPos;
 	float trackRadius;
@@ -60,6 +71,8 @@ private:
 
 	bool invertAlt;
 	bool goForward;
+
+	std::map<int, TUIO::TuioCursor*> cursors;
 };
 
 #endif

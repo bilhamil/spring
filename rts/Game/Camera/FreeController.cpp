@@ -36,7 +36,8 @@ CFreeController::CFreeController()
   tracking(false),
   trackPos(0.0f, 0.0f, 0.0f),
   trackRadius(0.0f),
-  gndLock(false)
+  gndLock(false),
+  cursors()
 {
 	dir = float3(0.0f, -2.0f, -1.0f);
 	dir.ANormalize();
@@ -63,6 +64,9 @@ CFreeController::CFreeController()
 	velTime     = max(0.1f, velTime);
 	avelTime    = configHandler->Get("CamFreeAngVelTime",     1.0f);
 	avelTime    = max(0.1f, avelTime);
+
+	lastSinglePoint.x = -1;
+	lastSinglePoint.y = -1;
 }
 
 
@@ -97,7 +101,7 @@ void CFreeController::Update()
 		prevAvel = avel;
 		return;
 	}
-	
+
 	// safeties
 	velTime  = max(0.1f,  velTime);
 	avelTime = max(0.1f, avelTime);
@@ -326,17 +330,183 @@ void CFreeController::ScreenEdgeMove(float3 move)
 	keys[SDLK_LSHIFT] = prevShift;
 }
 
-
 void CFreeController::MouseWheelMove(float move)
 {
-	boost::uint8_t prevCtrl  = keys[SDLK_LCTRL];
+	/*boost::uint8_t prevCtrl  = keys[SDLK_LCTRL];
 	boost::uint8_t prevShift = keys[SDLK_LSHIFT];
 	keys[SDLK_LCTRL] = 0;
 	keys[SDLK_LSHIFT] = 1;
 	const float3 m(0.0f, move, 0.0f);
 	KeyMove(m);
 	keys[SDLK_LCTRL] = prevCtrl;
-	keys[SDLK_LSHIFT] = prevShift;
+	keys[SDLK_LSHIFT] = prevShift;*/
+}
+
+ /* tuio updates */
+void CFreeController::addTuioCursor(TUIO::TuioCursor *tcur)
+{
+    cursors[tcur->getCursorID()] = tcur;
+}
+
+void CFreeController::updateTuioCursor(TUIO::TuioCursor *tcur)
+{
+
+}
+
+void CFreeController::removeTuioCursor(TUIO::TuioCursor *tcur)
+{
+    if(cursors.find(tcur->getCursorID()) != cursors.end())
+    {
+        cursors.erase(cursors.find(tcur->getCursorID()));
+    }
+}
+
+shortint2 toWindowSpace(TUIO::TuioPoint *point)
+{
+    int nx = point->getScreenX(globalRendering->screenSizeX);
+    int ny = point->getScreenY(globalRendering->screenSizeY);
+
+    nx -= globalRendering->winPosX;
+    ny -= (globalRendering->screenSizeY - globalRendering->winPosY - globalRendering->winSizeY);
+
+    shortint2 pnt;
+    pnt.x = nx;
+    pnt.y = ny;
+
+    return pnt;
+}
+
+shortint2 clampToWindowSpace(shortint2 &pnt)
+{
+    pnt.x = max(0, (int) pnt.x);
+    pnt.x = min(globalRendering->viewSizeX, (int) pnt.x);
+
+    pnt.y = max(0, (int) pnt.y);
+    pnt.y = min(globalRendering->viewSizeY, (int )pnt.y);
+}
+
+bool isInWindowSpace(const shortint2 &pnt)
+{
+    return pnt.x > 0 && pnt.y > 0 && pnt.x < globalRendering->viewSizeX && pnt.y < globalRendering->viewSizeY;
+}
+
+void CFreeController::tuioRefresh(TUIO::TuioTime ftime)
+{
+    int numCursors = cursors.size();
+
+    if(numCursors != 1)
+    {
+        vel.x = 0;
+        vel.z = 0;
+        lastSinglePoint.x = lastSinglePoint.y = -1;
+    }
+    if(numCursors == 1)
+    {
+        TUIO::TuioCursor *tcur = cursors.begin()->second;
+
+        globalRendering->screenSizeX;
+        globalRendering->screenSizeY;
+
+        shortint2 np = toWindowSpace(tcur);
+
+        shortint2 gp = np;
+        clampToWindowSpace(np);
+
+        if(isInWindowSpace(gp))
+        {
+
+            if(lastSinglePoint.x >= 0)
+            {
+
+                float3 newPos = pos;
+
+                float3 oldDir = camera->CalcPixelDir(lastSinglePoint.x,lastSinglePoint.y).SafeNormalize();
+                float3 newDir = camera->CalcPixelDir(np.x,np.y).SafeNormalize();
+
+                float oldDist=ground->LineGroundCol(pos,pos+oldDir*(globalRendering->viewRange*1.4f));
+                float newDist=ground->LineGroundCol(pos,pos+newDir*(globalRendering->viewRange*1.4f));
+
+                if(oldDist > 0 && newDist > 0)
+                {
+                    float3 oldGroundPos = oldDir * oldDist;
+                    float3 newGroundPos = newDir * newDist;
+
+                    float3 dpos = newGroundPos - oldGroundPos;
+
+                    dpos.y = 0;
+
+
+                    pos -= dpos;
+                }
+
+
+            }
+
+
+        }
+
+        lastSinglePoint = np;
+    }
+    else if (numCursors == 2)
+    {
+        TUIO::TuioCursor* one = cursors.begin()->second;
+        TUIO::TuioCursor* two = (++cursors.begin())->second;
+
+        if(one->getPath().size() > 1 && two->getPath().size() > 1)
+        {
+            TUIO::TuioPoint prevOne = *(++(one->getPath().rbegin()));
+            TUIO::TuioPoint prevTwo = *(++(two->getPath().rbegin()));
+
+            shortint2 oneScr, twoScr, prevOneScr, prevTwoScr;
+            oneScr = toWindowSpace(one);
+            twoScr = toWindowSpace(two);
+
+            prevOneScr = toWindowSpace(&prevOne);
+            prevTwoScr = toWindowSpace(&prevTwo);
+
+            logOutput.Print("one.x %d one.y %d onePrev.x %d onePrev.y %d",
+                            oneScr.x, oneScr.y, prevOneScr.x, prevOneScr.y);
+
+            int xdif = (oneScr.x - twoScr.x);
+            int prevXDif = (prevOneScr.x - prevTwoScr.x);
+
+            int ydif = (oneScr.y - twoScr.y);
+            int prevYDif = (prevOneScr.y - prevTwoScr.y);
+
+            float dist = xdif * xdif + ydif * ydif;
+            float prevDist = prevXDif * prevXDif + prevYDif * prevYDif;
+            logOutput.Print("yay two good points");
+
+            logOutput.Print("Dist: %f prevDist: %f", dist, prevDist);
+
+            if(dist != prevDist)
+            {
+
+                shortint2 mid;
+                mid.x = (oneScr.x + twoScr.x) / 2;
+                mid.y = (oneScr.y + twoScr.y) / 2;
+
+                if(isInWindowSpace(mid))
+                {
+                    float dDist = ::sqrtf(dist) - ::sqrtf(prevDist);
+
+                    float3 midDir = camera->CalcPixelDir(mid.x,mid.y).SafeNormalize();
+                    float grnDist=ground->LineGroundCol(pos,pos+midDir*(globalRendering->viewRange*1.4f));
+                    if(dDist > 0)
+                        pos += midDir * grnDist * (1.0f - std::pow(0.98f, streflop::fabsf(dDist)));
+                    else
+                        pos -= midDir * grnDist * (1.0f - std::pow(0.98f, streflop::fabsf(dDist)));
+
+                }
+            }
+            else
+            {
+                logOutput.Print("distances the same?");
+            }
+
+
+        }
+    }
 }
 
 
@@ -399,6 +569,7 @@ void CFreeController::SwitchTo(bool showText)
 	}
 	prevVel  = ZeroVector;
 	prevAvel = ZeroVector;
+	cursors.clear();
 }
 
 

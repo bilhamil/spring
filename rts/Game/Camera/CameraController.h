@@ -8,6 +8,8 @@
 #include <map>
 
 #include "float3.h"
+#include "lib/tuio/TuioObject.h"
+#include "lib/tuio/TuioCursor.h"
 
 class CCameraController
 {
@@ -26,6 +28,17 @@ public:
 	virtual void MouseMove(float3 move) = 0;
 	virtual void ScreenEdgeMove(float3 move) = 0;
 	virtual void MouseWheelMove(float move) = 0;
+
+    /*Tuio Updates*/
+	virtual void addTuioObject(TUIO::TuioObject *tobj) { };
+    virtual void updateTuioObject(TUIO::TuioObject *tobj) {};
+    virtual void removeTuioObject(TUIO::TuioObject *tobj) {};
+
+    virtual void addTuioCursor(TUIO::TuioCursor *tcur) { };
+    virtual void updateTuioCursor(TUIO::TuioCursor *tcur) {};
+    virtual void removeTuioCursor(TUIO::TuioCursor *tcur) {};
+
+    virtual void tuioRefresh(TUIO::TuioTime ftime) {};
 
 	virtual void Update() {}
 

@@ -8,6 +8,8 @@
 
 #include "GlobalUnsynced.h"
 #include "Rendering/GlobalRendering.h"
+#include "lib/tuio/TuioObject.h"
+#include "lib/tuio/TuioCursor.h"
 
 class CInputReceiver
 {
@@ -23,9 +25,22 @@ public:
 	virtual bool KeyPressed(unsigned short key, bool isRepeat) { return false; };
 	virtual bool KeyReleased(unsigned short key) { return false; };
 
+    /*Mouse Updates*/
 	virtual bool MousePress(int x, int y, int button) { return false; };
 	virtual void MouseMove(int x, int y, int dx, int dy, int button) {};
 	virtual void MouseRelease(int x, int y, int button) {};
+
+	/*Tuio Updates*/
+	virtual bool addTuioObject(TUIO::TuioObject *tobj) { return false; };
+    virtual void updateTuioObject(TUIO::TuioObject *tobj) {};
+    virtual void removeTuioObject(TUIO::TuioObject *tobj) {};
+
+    virtual bool addTuioCursor(TUIO::TuioCursor *tcur) { return false; };
+    virtual void updateTuioCursor(TUIO::TuioCursor *tcur) {};
+    virtual void removeTuioCursor(TUIO::TuioCursor *tcur) {};
+
+    virtual void tuioRefresh(TUIO::TuioTime ftime) {};
+
 	virtual bool IsAbove(int x, int y) { return false; };
 	virtual void Draw() {};
 	virtual std::string GetTooltip(int x,int y){return "No tooltip defined";};
