@@ -394,12 +394,18 @@ void CFreeController::tuioRefresh(TUIO::TuioTime ftime)
 {
     int numCursors = cursors.size();
 
+    logOutput.Print("numCursors: %d", numCursors);
     if(numCursors != 1)
     {
         vel.x = 0;
         vel.z = 0;
         lastSinglePoint.x = lastSinglePoint.y = -1;
     }
+    if(numCursors != 2)
+    {
+        prevDist = -1;
+    }
+
     if(numCursors == 1)
     {
         TUIO::TuioCursor *tcur = cursors.begin()->second;
@@ -411,6 +417,8 @@ void CFreeController::tuioRefresh(TUIO::TuioTime ftime)
 
         shortint2 gp = np;
         clampToWindowSpace(np);
+
+        logOutput.Print("one");
 
         if(isInWindowSpace(gp))
         {
@@ -424,17 +432,22 @@ void CFreeController::tuioRefresh(TUIO::TuioTime ftime)
                 float3 newDir = camera->CalcPixelDir(np.x,np.y).SafeNormalize();
 
                 float oldDist=ground->LineGroundCol(pos,pos+oldDir*(globalRendering->viewRange*1.4f));
-                float newDist=ground->LineGroundCol(pos,pos+newDir*(globalRendering->viewRange*1.4f));
 
-                if(oldDist > 0 && newDist > 0)
+                //float newDist=ground->LineGroundCol(pos,pos+newDir*(globalRendering->viewRange*1.4f));
+
+                if(oldDist > 0)
                 {
                     float3 oldGroundPos = oldDir * oldDist;
+
+                    float oldHeight = oldGroundPos.y;
+
+                    float newDist = (oldHeight) / newDir.y;
+
                     float3 newGroundPos = newDir * newDist;
 
                     float3 dpos = newGroundPos - oldGroundPos;
 
                     dpos.y = 0;
-
 
                     pos -= dpos;
                 }
@@ -452,60 +465,75 @@ void CFreeController::tuioRefresh(TUIO::TuioTime ftime)
         TUIO::TuioCursor* one = cursors.begin()->second;
         TUIO::TuioCursor* two = (++cursors.begin())->second;
 
-        if(one->getPath().size() > 1 && two->getPath().size() > 1)
+        shortint2 oneScr, twoScr, prevOneScr, prevTwoScr;
+        oneScr = toWindowSpace(one);
+        twoScr = toWindowSpace(two);
+
+        int xdif = (oneScr.x - twoScr.x);
+        //int prevXDif = (prevOneScr.x - prevTwoScr.x);
+
+        int ydif = (oneScr.y - twoScr.y);
+        //int prevYDif = (prevOneScr.y - prevTwoScr.y);
+
+        float dist = ::sqrtf(xdif * xdif + ydif * ydif);
+        logOutput.Print("two %f", dist);
+        if(prevDist >= 0)//one->getPath().size() > 1 && two->getPath().size() > 1)
         {
-            TUIO::TuioPoint prevOne = *(++(one->getPath().rbegin()));
-            TUIO::TuioPoint prevTwo = *(++(two->getPath().rbegin()));
+            //TUIO::TuioPoint prevOne = *(++(one->getPath().rbegin()));
+            //TUIO::TuioPoint prevTwo = *(++(two->getPath().rbegin()));
 
-            shortint2 oneScr, twoScr, prevOneScr, prevTwoScr;
-            oneScr = toWindowSpace(one);
-            twoScr = toWindowSpace(two);
 
-            prevOneScr = toWindowSpace(&prevOne);
-            prevTwoScr = toWindowSpace(&prevTwo);
 
-            logOutput.Print("one.x %d one.y %d onePrev.x %d onePrev.y %d",
-                            oneScr.x, oneScr.y, prevOneScr.x, prevOneScr.y);
+           // prevOneScr = toWindowSpace(&prevOne);
+            //prevTwoScr = toWindowSpace(&prevTwo);
 
-            int xdif = (oneScr.x - twoScr.x);
-            int prevXDif = (prevOneScr.x - prevTwoScr.x);
+            /*logOutput.Print("one.x %d one.y %d onePrev.x %d onePrev.y %d",
+                            oneScr.x, oneScr.y, prevOneScr.x, prevOneScr.y);*/
 
-            int ydif = (oneScr.y - twoScr.y);
-            int prevYDif = (prevOneScr.y - prevTwoScr.y);
-
-            float dist = xdif * xdif + ydif * ydif;
-            float prevDist = prevXDif * prevXDif + prevYDif * prevYDif;
-            logOutput.Print("yay two good points");
-
-            logOutput.Print("Dist: %f prevDist: %f", dist, prevDist);
-
-            if(dist != prevDist)
+            float dDist = dist - prevDist;
+            int changeUnit = 5;
+            if(streflop::fabsf(dDist) >= changeUnit)
             {
-
                 shortint2 mid;
                 mid.x = (oneScr.x + twoScr.x) / 2;
                 mid.y = (oneScr.y + twoScr.y) / 2;
+                float distanceUsed = 0;
 
                 if(isInWindowSpace(mid))
                 {
-                    float dDist = ::sqrtf(dist) - ::sqrtf(prevDist);
-
                     float3 midDir = camera->CalcPixelDir(mid.x,mid.y).SafeNormalize();
                     float grnDist=ground->LineGroundCol(pos,pos+midDir*(globalRendering->viewRange*1.4f));
+
+                    float usedDDist = streflop::floorf(streflop::fabsf(dDist/changeUnit));
                     if(dDist > 0)
-                        pos += midDir * grnDist * (1.0f - std::pow(0.98f, streflop::fabsf(dDist)));
+                    {
+                        distanceUsed = prevDist + usedDDist;
+
+                        pos += midDir * grnDist * (1.0f - std::pow(0.98f, usedDDist));
+                    }
                     else
-                        pos -= midDir * grnDist * (1.0f - std::pow(0.98f, streflop::fabsf(dDist)));
+                    {
+                        distanceUsed = prevDist - usedDDist;
+
+                        pos -= midDir * grnDist * (1.0f - std::pow(0.98f, usedDDist));
+                    }
 
                 }
+                prevDist = distanceUsed;
             }
             else
             {
-                logOutput.Print("distances the same?");
+                //logOutput.Print("distances the same?");
             }
 
 
         }
+        else
+        {
+            prevDist = dist;
+        }
+
+
     }
 }
 

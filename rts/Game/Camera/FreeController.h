@@ -52,6 +52,7 @@ private:
 	float3 prevAvel; // previous angular velocity
 
 	shortint2 lastSinglePoint;
+	float prevDist;
 
 	bool tracking;
 	float3 trackPos;
