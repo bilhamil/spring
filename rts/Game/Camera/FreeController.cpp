@@ -14,6 +14,8 @@
 #include "GlobalUnsynced.h"
 #include "Rendering/GlobalRendering.h"
 #include <boost/cstdint.hpp>
+#include "System/Matrix44f.h"
+
 
 using std::max;
 using std::min;
@@ -390,11 +392,46 @@ bool isInWindowSpace(const shortint2 &pnt)
     return pnt.x > 0 && pnt.y > 0 && pnt.x < globalRendering->viewSizeX && pnt.y < globalRendering->viewSizeY;
 }
 
+void CFreeController::translate(shortint2 &last, shortint2 &now)
+{
+    shortint2 gp = now;
+    clampToWindowSpace(now);
+
+    if(isInWindowSpace(gp))
+    {
+
+        float3 newPos = pos;
+
+        float3 oldDir = camera->CalcPixelDir(last.x,last.y).SafeNormalize();
+        float3 newDir = camera->CalcPixelDir(now.x,now.y).SafeNormalize();
+
+        float oldDist= -pos.y / oldDir.y;//ground->LineGroundCol(pos,pos+oldDir*(globalRendering->viewRange*1.4f));
+
+        //float newDist=ground->LineGroundCol(pos,pos+newDir*(globalRendering->viewRange*1.4f));
+
+        if(oldDist > 0)
+        {
+            float3 oldGroundPos = oldDir * oldDist;
+
+            float newDist = (-pos.y) / newDir.y;
+
+            float3 newGroundPos = newDir * newDist;
+
+            float3 dpos = newGroundPos - oldGroundPos;
+
+            dpos.y = 0;
+
+            pos -= dpos;
+        }
+
+    }
+
+}
+
 void CFreeController::tuioRefresh(TUIO::TuioTime ftime)
 {
     int numCursors = cursors.size();
 
-    logOutput.Print("numCursors: %d", numCursors);
     if(numCursors != 1)
     {
         vel.x = 0;
@@ -404,60 +441,21 @@ void CFreeController::tuioRefresh(TUIO::TuioTime ftime)
     if(numCursors != 2)
     {
         prevDist = -1;
+        lastMidPoint.x = lastMidPoint.y = -1;
     }
 
     if(numCursors == 1)
     {
         TUIO::TuioCursor *tcur = cursors.begin()->second;
 
-        globalRendering->screenSizeX;
-        globalRendering->screenSizeY;
-
         shortint2 np = toWindowSpace(tcur);
 
-        shortint2 gp = np;
-        clampToWindowSpace(np);
-
-        logOutput.Print("one");
-
-        if(isInWindowSpace(gp))
+        if(lastSinglePoint.x > 0)
         {
-
-            if(lastSinglePoint.x >= 0)
-            {
-
-                float3 newPos = pos;
-
-                float3 oldDir = camera->CalcPixelDir(lastSinglePoint.x,lastSinglePoint.y).SafeNormalize();
-                float3 newDir = camera->CalcPixelDir(np.x,np.y).SafeNormalize();
-
-                float oldDist=ground->LineGroundCol(pos,pos+oldDir*(globalRendering->viewRange*1.4f));
-
-                //float newDist=ground->LineGroundCol(pos,pos+newDir*(globalRendering->viewRange*1.4f));
-
-                if(oldDist > 0)
-                {
-                    float3 oldGroundPos = oldDir * oldDist;
-
-                    float oldHeight = oldGroundPos.y;
-
-                    float newDist = (oldHeight) / newDir.y;
-
-                    float3 newGroundPos = newDir * newDist;
-
-                    float3 dpos = newGroundPos - oldGroundPos;
-
-                    dpos.y = 0;
-
-                    pos -= dpos;
-                }
-
-
-            }
-
-
+            translate(lastSinglePoint, np);
         }
 
+        //always change the lastSinglePort
         lastSinglePoint = np;
     }
     else if (numCursors == 2)
@@ -469,41 +467,52 @@ void CFreeController::tuioRefresh(TUIO::TuioTime ftime)
         oneScr = toWindowSpace(one);
         twoScr = toWindowSpace(two);
 
+        shortint2 mid;
+        mid.x = (oneScr.x + twoScr.x) / 2;
+        mid.y = (oneScr.y + twoScr.y) / 2;
+
+
+        /* do any panning that we're going to do */
+        {
+            shortint2 midCopy = mid;
+
+            if(lastMidPoint.x > 0)
+            {
+                translate(lastMidPoint, midCopy);
+            }
+
+            //always change the lastSinglePort
+            lastMidPoint = midCopy;
+        }
+
         int xdif = (oneScr.x - twoScr.x);
-        //int prevXDif = (prevOneScr.x - prevTwoScr.x);
 
         int ydif = (oneScr.y - twoScr.y);
-        //int prevYDif = (prevOneScr.y - prevTwoScr.y);
 
         float dist = ::sqrtf(xdif * xdif + ydif * ydif);
+        float curRot = -one->getAngle(two);
+
         logOutput.Print("two %f", dist);
-        if(prevDist >= 0)//one->getPath().size() > 1 && two->getPath().size() > 1)
+        if(prevDist >= 0)
         {
-            //TUIO::TuioPoint prevOne = *(++(one->getPath().rbegin()));
-            //TUIO::TuioPoint prevTwo = *(++(two->getPath().rbegin()));
 
 
+            shortint2 mid;
+            mid.x = (oneScr.x + twoScr.x) / 2;
+            mid.y = (oneScr.y + twoScr.y) / 2;
+            float distanceUsed = 0;
 
-           // prevOneScr = toWindowSpace(&prevOne);
-            //prevTwoScr = toWindowSpace(&prevTwo);
 
-            /*logOutput.Print("one.x %d one.y %d onePrev.x %d onePrev.y %d",
-                            oneScr.x, oneScr.y, prevOneScr.x, prevOneScr.y);*/
-
-            float dDist = dist - prevDist;
-            int changeUnit = 5;
-            if(streflop::fabsf(dDist) >= changeUnit)
+            if(isInWindowSpace(mid))
             {
-                shortint2 mid;
-                mid.x = (oneScr.x + twoScr.x) / 2;
-                mid.y = (oneScr.y + twoScr.y) / 2;
-                float distanceUsed = 0;
+                float dDist = dist - prevDist;
+                int changeUnit = 5;
 
-                if(isInWindowSpace(mid))
+                float3 midDir = camera->CalcPixelDir(mid.x,mid.y).SafeNormalize();
+                float grnDist=ground->LineGroundCol(pos,pos+midDir*(globalRendering->viewRange*1.4f));
+
+                if(streflop::fabsf(dDist) >= changeUnit)
                 {
-                    float3 midDir = camera->CalcPixelDir(mid.x,mid.y).SafeNormalize();
-                    float grnDist=ground->LineGroundCol(pos,pos+midDir*(globalRendering->viewRange*1.4f));
-
                     float usedDDist = streflop::floorf(streflop::fabsf(dDist/changeUnit));
                     if(dDist > 0)
                     {
@@ -517,21 +526,41 @@ void CFreeController::tuioRefresh(TUIO::TuioTime ftime)
 
                         pos -= midDir * grnDist * (1.0f - std::pow(0.98f, usedDDist));
                     }
-
+                    /* update prevDist */
+                    prevDist = distanceUsed;
                 }
-                prevDist = distanceUsed;
-            }
-            else
-            {
-                //logOutput.Print("distances the same?");
-            }
 
+                float dRot = curRot - prevRot;
+                dRot = streflop::fmodf(dRot, M_PI * 2);
+                float angularChangeThresh = 5.0f * M_PI / 180.0f;
+
+                if(streflop::fabsf(dRot) >= angularChangeThresh && grnDist >= 0)
+                {
+                    CMatrix44f rotate;
+                    rotate.Rotate(dRot, UpVector);
+
+                    float3 grndOffset = midDir * -grnDist;
+
+                    float3 newOffset = rotate.Mul(grndOffset);
+
+                    newOffset -= grndOffset;
+
+                    pos += newOffset;
+
+                    camera->rot.y += dRot;
+
+                    prevRot = curRot;
+                }
+
+            }
 
         }
         else
         {
             prevDist = dist;
+            prevRot = curRot;
         }
+
 
 
     }

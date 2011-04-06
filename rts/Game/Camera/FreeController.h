@@ -45,6 +45,7 @@ public:
 	bool SetState(const StateMap& sm);
 
 private:
+    void translate(shortint2 &last, shortint2 &now);
 	float3 dir;
 	float3 vel;      // velocity
 	float3 avel;     // angular velocity
@@ -52,7 +53,9 @@ private:
 	float3 prevAvel; // previous angular velocity
 
 	shortint2 lastSinglePoint;
+	shortint2 lastMidPoint;
 	float prevDist;
+	float prevRot;
 
 	bool tracking;
 	float3 trackPos;
