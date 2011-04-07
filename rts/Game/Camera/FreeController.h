@@ -56,6 +56,7 @@ private:
 	shortint2 lastMidPoint;
 	float prevDist;
 	float prevRot;
+	int lastThreeFingerDx;
 
 	bool tracking;
 	float3 trackPos;

@@ -443,127 +443,222 @@ void CFreeController::tuioRefresh(TUIO::TuioTime ftime)
         prevDist = -1;
         lastMidPoint.x = lastMidPoint.y = -1;
     }
-
-    if(numCursors == 1)
+    if(numCursors != 3)
     {
-        TUIO::TuioCursor *tcur = cursors.begin()->second;
-
-        shortint2 np = toWindowSpace(tcur);
-
-        if(lastSinglePoint.x > 0)
-        {
-            translate(lastSinglePoint, np);
-        }
-
-        //always change the lastSinglePort
-        lastSinglePoint = np;
+        lastThreeFingerDx = -1;
     }
-    else if (numCursors == 2)
+
+    switch(numCursors)
     {
-        TUIO::TuioCursor* one = cursors.begin()->second;
-        TUIO::TuioCursor* two = (++cursors.begin())->second;
-
-        shortint2 oneScr, twoScr, prevOneScr, prevTwoScr;
-        oneScr = toWindowSpace(one);
-        twoScr = toWindowSpace(two);
-
-        shortint2 mid;
-        mid.x = (oneScr.x + twoScr.x) / 2;
-        mid.y = (oneScr.y + twoScr.y) / 2;
-
-
-        /* do any panning that we're going to do */
+        case 1:
         {
-            shortint2 midCopy = mid;
+            TUIO::TuioCursor *tcur = cursors.begin()->second;
 
-            if(lastMidPoint.x > 0)
+            shortint2 np = toWindowSpace(tcur);
+
+            if(lastSinglePoint.x > 0)
             {
-                translate(lastMidPoint, midCopy);
+                translate(lastSinglePoint, np);
             }
 
             //always change the lastSinglePort
-            lastMidPoint = midCopy;
+            lastSinglePoint = np;
         }
+        break;
 
-        int xdif = (oneScr.x - twoScr.x);
-
-        int ydif = (oneScr.y - twoScr.y);
-
-        float dist = ::sqrtf(xdif * xdif + ydif * ydif);
-        float curRot = -one->getAngle(two);
-
-        logOutput.Print("two %f", dist);
-        if(prevDist >= 0)
+        case 2:
         {
+            TUIO::TuioCursor* one = cursors.begin()->second;
+            TUIO::TuioCursor* two = (++cursors.begin())->second;
 
+            shortint2 oneScr, twoScr;
+            oneScr = toWindowSpace(one);
+            twoScr = toWindowSpace(two);
 
             shortint2 mid;
             mid.x = (oneScr.x + twoScr.x) / 2;
             mid.y = (oneScr.y + twoScr.y) / 2;
-            float distanceUsed = 0;
 
 
-            if(isInWindowSpace(mid))
+            /* do any panning that we're going to do */
             {
-                float dDist = dist - prevDist;
-                int changeUnit = 5;
+                shortint2 midCopy = mid;
 
-                float3 midDir = camera->CalcPixelDir(mid.x,mid.y).SafeNormalize();
-                float grnDist=ground->LineGroundCol(pos,pos+midDir*(globalRendering->viewRange*1.4f));
-
-                if(streflop::fabsf(dDist) >= changeUnit)
+                if(lastMidPoint.x > 0)
                 {
-                    float usedDDist = streflop::floorf(streflop::fabsf(dDist/changeUnit));
-                    if(dDist > 0)
-                    {
-                        distanceUsed = prevDist + usedDDist;
-
-                        pos += midDir * grnDist * (1.0f - std::pow(0.98f, usedDDist));
-                    }
-                    else
-                    {
-                        distanceUsed = prevDist - usedDDist;
-
-                        pos -= midDir * grnDist * (1.0f - std::pow(0.98f, usedDDist));
-                    }
-                    /* update prevDist */
-                    prevDist = distanceUsed;
+                    translate(lastMidPoint, midCopy);
                 }
 
-                float dRot = curRot - prevRot;
-                dRot = streflop::fmodf(dRot, M_PI * 2);
-                float angularChangeThresh = 5.0f * M_PI / 180.0f;
+                //always change the lastSinglePort
+                lastMidPoint = midCopy;
+            }
 
-                if(streflop::fabsf(dRot) >= angularChangeThresh && grnDist >= 0)
+            int xdif = (oneScr.x - twoScr.x);
+
+            int ydif = (oneScr.y - twoScr.y);
+
+            float dist = ::sqrtf(xdif * xdif + ydif * ydif);
+            float curRot = -one->getAngle(two);
+
+            logOutput.Print("two %f", dist);
+            if(prevDist >= 0)
+            {
+
+
+                shortint2 mid;
+                mid.x = (oneScr.x + twoScr.x) / 2;
+                mid.y = (oneScr.y + twoScr.y) / 2;
+                float distanceUsed = 0;
+
+
+                if(isInWindowSpace(mid))
                 {
-                    CMatrix44f rotate;
-                    rotate.Rotate(dRot, UpVector);
+                    float dDist = dist - prevDist;
+                    int changeUnit = 5;
 
-                    float3 grndOffset = midDir * -grnDist;
+                    float3 midDir = camera->CalcPixelDir(mid.x,mid.y).SafeNormalize();
+                    float grnDist=ground->LineGroundCol(pos,pos+midDir*(globalRendering->viewRange*1.4f));
 
-                    float3 newOffset = rotate.Mul(grndOffset);
+                    if(streflop::fabsf(dDist) >= changeUnit)
+                    {
+                        float usedDDist = streflop::floorf(streflop::fabsf(dDist/changeUnit));
+                        if(dDist > 0)
+                        {
+                            distanceUsed = prevDist + usedDDist;
 
-                    newOffset -= grndOffset;
+                            pos += midDir * grnDist * (1.0f - std::pow(0.98f, usedDDist));
+                        }
+                        else
+                        {
+                            distanceUsed = prevDist - usedDDist;
 
-                    pos += newOffset;
+                            pos -= midDir * grnDist * (1.0f - std::pow(0.98f, usedDDist));
+                        }
+                        /* update prevDist */
+                        prevDist = distanceUsed;
+                    }
 
-                    camera->rot.y += dRot;
+                    float dRot = curRot - prevRot;
+                    dRot = streflop::fmodf(dRot, M_PI * 2);
+                    float angularChangeThresh = 5.0f * M_PI / 180.0f;
 
-                    prevRot = curRot;
+                    if(streflop::fabsf(dRot) >= angularChangeThresh && grnDist >= 0)
+                    {
+                        CMatrix44f rotate;
+                        rotate.Rotate(dRot, UpVector);
+
+                        float3 grndOffset = midDir * -grnDist;
+
+                        float3 newOffset = rotate.Mul(grndOffset);
+
+                        newOffset -= grndOffset;
+
+                        pos += newOffset;
+
+                        camera->rot.y += dRot;
+
+                        camera->UpdateForward();
+
+                        prevRot = curRot;
+                    }
+
+                }
+
+            }
+            else
+            {
+                prevDist = dist;
+                prevRot = curRot;
+            }
+        }
+        break;
+
+        case 3:
+        {
+            shortint2 highest, lowest;
+
+            lowest.y = -1;
+            highest.y = 10000;
+
+            for(std::map<int, TUIO::TuioCursor*>::const_iterator it = cursors.begin(); it != cursors.end(); it++)
+            {
+                TUIO::TuioCursor* cursor = it->second;
+                shortint2 scrCur = toWindowSpace(cursor);
+
+                if(scrCur.y <= highest.y)
+                {
+                    highest = scrCur;
+                }
+
+                if(scrCur.y >= lowest.y)
+                {
+                    lowest = scrCur;
                 }
 
             }
 
+            int dX = lowest.y - highest.y;
+
+            if(lastThreeFingerDx >= 0)
+            {
+                int dDx = dX - lastThreeFingerDx;
+
+                int thresh = 1;
+
+                if(abs(dDx) >= thresh)
+                {
+                    int usedChange = dDx / thresh;
+                    usedChange *= thresh;
+
+                    lastThreeFingerDx += usedChange;
+
+                    float rot = 1.0f / 180.0f * M_PI * usedChange / 5.0f;
+
+
+
+                    float3 rotArm = camera->CalcPixelDir(highest.x,highest.y).SafeNormalize();
+
+                    float currentRot = camera->rot.x;
+
+                    // angular clamps
+                    const float xRotLimit = (PI * 0.4999f);
+                    if (currentRot + rot > xRotLimit) {
+                        rot = xRotLimit - currentRot;
+                    }
+                    else if (currentRot + rot < -xRotLimit) {
+                        rot = -xRotLimit - currentRot;
+                    }
+
+                    CMatrix44f rotate;
+                    rotate.Rotate(rot, camera->right);
+
+                    float grnDist=ground->LineGroundCol(pos,pos+rotArm*(globalRendering->viewRange*1.4f));
+
+                    if(grnDist > 0)
+                    {
+                        rotArm *= -grnDist;
+
+                        float3 rotatedArm = rotate.Mul(rotArm);
+
+                        pos += (rotatedArm - rotArm);
+
+                        camera->rot.x +=  rot;
+                    }
+                    //camera->UpdateForward();*/
+
+                    //camera->Pitch(rot);
+
+                }
+            }
+            else
+            {
+                lastThreeFingerDx = dX;
+            }
         }
-        else
-        {
-            prevDist = dist;
-            prevRot = curRot;
-        }
-
-
-
-    }
+        break;
+        default:
+        break;
+    };
 }
 
 
