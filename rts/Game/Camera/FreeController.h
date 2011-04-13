@@ -45,7 +45,7 @@ public:
 	bool SetState(const StateMap& sm);
 
 private:
-    void translate(shortint2 &last, shortint2 &now);
+    float3 translate(shortint2 &last, shortint2 &now);
 	float3 dir;
 	float3 vel;      // velocity
 	float3 avel;     // angular velocity
@@ -54,8 +54,11 @@ private:
 
 	shortint2 lastSinglePoint;
 	shortint2 lastMidPoint;
+
+	TUIO::TuioTime lastTime;
 	float prevDist;
 	float prevRot;
+	float3 lastVel;
 	int lastThreeFingerDx;
 
 	bool tracking;

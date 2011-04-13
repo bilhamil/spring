@@ -10,9 +10,15 @@
 #include <hash_set>
 #include "lib/tuio/TuioClient.h"
 #include "lib/tuio/TuioObject.h"
+#include "System/myMath.h"
 
 class CInputReceiver;
 class CCameraController;
+
+/* Windowing helpers */
+shortint2 toWindowSpace(TUIO::TuioPoint *point);
+shortint2 clampToWindowSpace(shortint2 &pnt);
+bool isInWindowSpace(const shortint2 &pnt);
 
 struct CInputReceiver_hash
 {

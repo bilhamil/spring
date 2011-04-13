@@ -26,6 +26,7 @@
 #include "Game/UI/KeySet.h"
 #include "Game/UI/KeyBindings.h"
 #include "Game/UI/MiniMap.h"
+#include "Game/UI/TUIOHandler.h"
 #include "Rendering/InMapDraw.h"
 #include "Rendering/GlobalRendering.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -1641,7 +1642,6 @@ bool CLuaHandle::MousePress(int x, int y, int button)
 	return retval;
 }
 
-
 int CLuaHandle::MouseRelease(int x, int y, int button)
 {
 	if (!CheckModUICtrl()) {
@@ -1705,6 +1705,63 @@ bool CLuaHandle::MouseMove(int x, int y, int dx, int dy, int button)
 	return retval;
 }
 
+bool CLuaHandle::AddCursor(TUIO::TuioCursor* tcur)
+{
+    /*if (!CheckModUICtrl()) {
+		return false;
+	}
+
+	shortint2 pos = toWindowSpace(tcur);
+	int x = pos.x;
+	int y = pos.y;
+
+	if(!isInWindowSpace(pos))
+	{
+	    return false;
+	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 5);
+
+	static const LuaHashString cmdStr("AddCursor");
+
+	if (!PushUnsyncedCallIn(cmdStr)) {
+		return false; // the call is not defined, do not take the event
+	}
+
+    lua_pushnumber(L, tcur->getCursorID());
+	lua_pushnumber(L, x);
+	lua_pushnumber(L, y);
+
+	// call the function
+	if (!RunCallInUnsynced(cmdStr, 3, 1)) {
+		return false;
+	}
+
+	if (!lua_isboolean(L, -1)) {
+		lua_pop(L, 1);
+		return false;
+	}
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;*/
+	return false;
+}
+
+void CLuaHandle::UpdateCursor(TUIO::TuioCursor* tcur)
+{
+
+}
+
+void CLuaHandle::RemoveCursor(TUIO::TuioCursor* tcur)
+{
+
+}
+
+void CLuaHandle::RefreshCursors(TUIO::TuioTime ftime)
+{
+
+}
 
 bool CLuaHandle::MouseWheel(bool up, float value)
 {

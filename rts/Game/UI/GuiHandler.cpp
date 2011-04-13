@@ -17,6 +17,7 @@
 #include "LuaUI.h"
 #include "MiniMap.h"
 #include "MouseHandler.h"
+#include "Game/UI/TUIOHandler.h"
 #include "Game/Camera.h"
 #include "Game/Game.h"
 #include "Game/GameHelper.h"
@@ -56,7 +57,9 @@
 
 extern boost::uint8_t *keys;
 
-
+#define MOUSE 1
+#define TOUCH 2
+#define NONE 0
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -72,6 +75,7 @@ CGuiHandler::CGuiHandler():
 	needShift(false),
 	showingMetal(false),
 	activeMousePress(false),
+	activeMousePressDevice(NONE),
 	forceLayoutUpdate(false),
 	maxPage(0),
 	activePage(0),
@@ -1040,16 +1044,24 @@ bool CGuiHandler::MousePress(int x, int y, int button)
 {
 	GML_RECMUTEX_LOCK(gui); // MousePress - updates inCommand
 
+    if(activeMousePress)
+        return false;
+
 	if (button != SDL_BUTTON_LEFT && button != SDL_BUTTON_RIGHT && button != -SDL_BUTTON_RIGHT && button != -SDL_BUTTON_LEFT)
 		return false;
+
+    logOutput.Print("Mouse Point x: %d y: %d", x, y);
 
 	if (button < 0) {
 		// proxied click from the minimap
 		button = -button;
 		activeMousePress=true;
+		activeMousePressDevice = MOUSE;
 	}
 	else if (AboveGui(x,y)) {
+	    logOutput.Print("Mouse Above Gui");
 		activeMousePress = true;
+		activeMousePressDevice = MOUSE;
 		if ((curIconCommand < 0) && !game->hideInterface) {
 			const int iconPos = IconAtPos(x, y);
 			if (iconPos >= 0) {
@@ -1073,11 +1085,13 @@ bool CGuiHandler::MousePress(int x, int y, int button)
 			return false;
 		}
 		activeMousePress = true;
+		activeMousePressDevice = MOUSE;
 		return true;
 	}
 
 	if (button == SDL_BUTTON_RIGHT) {
 		activeMousePress = true;
+		activeMousePressDevice = MOUSE;
 		defaultCmdMemory = GetDefaultCommand(x, y);
 		return true;
 	}
@@ -1090,6 +1104,9 @@ void CGuiHandler::MouseRelease(int x, int y, int button, float3& camerapos, floa
 {
 	GML_RECMUTEX_LOCK(gui); // MouseRelease
 
+    if(!activeMousePress || activeMousePressDevice != MOUSE)
+        return;
+
 	if (button != SDL_BUTTON_LEFT && button != SDL_BUTTON_RIGHT && button != -SDL_BUTTON_RIGHT && button != -SDL_BUTTON_LEFT)
 		return;
 
@@ -1101,6 +1118,7 @@ void CGuiHandler::MouseRelease(int x, int y, int button, float3& camerapos, floa
 
 	if (activeMousePress) {
 		activeMousePress = false;
+		activeMousePressDevice = NONE;
 	} else {
 		return;
 	}
@@ -1153,6 +1171,140 @@ void CGuiHandler::MouseRelease(int x, int y, int button, float3& camerapos, floa
 	FinishCommand(button);
 }
 
+bool CGuiHandler::addTuioCursor(TUIO::TuioCursor *tcur)
+{
+    shortint2 pos = toWindowSpace(tcur);
+
+    if(! isInWindowSpace(pos))
+    {
+        return false;
+    }
+
+    int x = pos.x;
+    int y = pos.y;
+
+    int button = SDL_BUTTON_LEFT;
+
+    GML_RECMUTEX_LOCK(gui); // MousePress - updates inCommand
+
+    if(activeMousePress)
+        return false;
+
+    logOutput.Print("Touch Point x: %d y: %d", x, y);
+
+	if (AboveGui(x,y))
+	{
+	    logOutput.Print("Touch Above Gui");
+		activeMousePress = true;
+		activeMousePressDevice = TOUCH;
+		if ((curIconCommand < 0) && !game->hideInterface) {
+			const int iconPos = IconAtPos(x, y);
+			if (iconPos >= 0) {
+				curIconCommand = icons[iconPos].commandsID;
+			}
+		}
+		if (button == SDL_BUTTON_RIGHT)
+			inCommand = defaultCmdMemory = -1;
+		return true;
+	}
+	else if (minimap && minimap->IsAbove(x, y)) {
+		return false; // let the minimap do its job
+	}
+
+	if (inCommand >= 0) {
+		if (invertQueueKey && (button == SDL_BUTTON_RIGHT) &&
+		    !mouse->buttons[SDL_BUTTON_LEFT].pressed) { // for rocker gestures
+			SetShowingMetal(false);
+			inCommand = -1;
+			needShift = false;
+			return false;
+		}
+		activeMousePress = true;
+		activeMousePressDevice = TOUCH;
+		return true;
+	}
+
+	return false;
+}
+
+void CGuiHandler::updateTuioCursor(TUIO::TuioCursor *tcur)
+{
+
+}
+
+void CGuiHandler::removeTuioCursor(TUIO::TuioCursor *tcur)
+{
+    shortint2 pos = toWindowSpace(tcur);
+
+    if(!isInWindowSpace(pos))
+    {
+        return;
+    }
+
+    int x = pos.x;
+    int y = pos.y;
+
+    float3& camerapos = ::camera->pos;
+    float3 mousedir = camera->CalcPixelDir(x, y);
+    int button = SDL_BUTTON_LEFT;
+
+    GML_RECMUTEX_LOCK(gui); // MouseRelease
+
+    if(!activeMousePress || activeMousePressDevice != TOUCH)
+    {
+        return;
+    }
+
+	int lastIconCmd = curIconCommand;
+	curIconCommand = -1;
+
+	int iconCmd = -1;
+	explicitCommand = inCommand;
+
+	if (activeMousePress) {
+		activeMousePress = false;
+		activeMousePressDevice = NONE;
+	} else {
+		return;
+	}
+
+	if (!invertQueueKey && needShift && !keys[SDLK_LSHIFT]) {
+		SetShowingMetal(false);
+		inCommand = -1;
+		needShift = false;
+	}
+
+    // setup iconCmd
+    if (!game->hideInterface) {
+        const int iconPos = IconAtPos(x, y);
+        if (iconPos >= 0) {
+            iconCmd = icons[iconPos].commandsID;
+            if(iconCmd != lastIconCmd)
+                iconCmd = -1; // mouse was pressed on one button and released on another one --> ignore the command
+        }
+    }
+
+	if ((iconCmd >= 0) && ((size_t)iconCmd < commands.size())) {
+		const bool rmb = (button == SDL_BUTTON_RIGHT);
+		SetActiveCommand(iconCmd, rmb);
+		return;
+	}
+
+	// not over a button, try to execute a command
+	Command c = GetCommand(x, y, button, false, camerapos, mousedir);
+
+	if (c.id == CMD_FAILED) { // indicates we should not finish the current command
+		Channels::UserInterface.PlaySample(failedSound, 5);
+		return;
+	}
+	// if cmd_stop is returned it indicates that no good command could be found
+	if (c.id != CMD_STOP) {
+		GiveCommand(c);
+		lastKeySet.Reset();
+	}
+
+	FinishCommand(button);
+}
 
 bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rmb)
 {

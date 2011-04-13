@@ -35,6 +35,11 @@ public:
 	bool MousePress(int x, int y, int button);
 	void MouseRelease(int x, int y, int button) {MouseRelease(x,y,button, ::camera->pos, ::mouse->dir);}
 	void MouseRelease(int x, int y, int button, float3& camerapos, float3& mousedir);
+
+	virtual bool addTuioCursor(TUIO::TuioCursor *tcur);
+	virtual void updateTuioCursor(TUIO::TuioCursor *tcur);
+	virtual void removeTuioCursor(TUIO::TuioCursor *tcur);
+
 	bool IsAbove(int x, int y);
 	std::string GetTooltip(int x, int y);
 	std::string GetBuildTooltip() const;
@@ -152,6 +157,7 @@ private:
 	bool autoShowMetal;
 	bool invertQueueKey;
 	bool activeMousePress;
+    int activeMousePressDevice;
 	bool forceLayoutUpdate;
 	int maxPage;
 	int activePage;

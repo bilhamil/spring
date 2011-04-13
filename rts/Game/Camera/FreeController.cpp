@@ -15,6 +15,7 @@
 #include "Rendering/GlobalRendering.h"
 #include <boost/cstdint.hpp>
 #include "System/Matrix44f.h"
+#include "Game/UI/TUIOHandler.h"
 
 
 using std::max;
@@ -348,6 +349,8 @@ void CFreeController::MouseWheelMove(float move)
 void CFreeController::addTuioCursor(TUIO::TuioCursor *tcur)
 {
     cursors[tcur->getCursorID()] = tcur;
+    vel = ZeroVector;
+    prevVel = ZeroVector;
 }
 
 void CFreeController::updateTuioCursor(TUIO::TuioCursor *tcur)
@@ -357,42 +360,19 @@ void CFreeController::updateTuioCursor(TUIO::TuioCursor *tcur)
 
 void CFreeController::removeTuioCursor(TUIO::TuioCursor *tcur)
 {
+    int numCursors = cursors.size();
     if(cursors.find(tcur->getCursorID()) != cursors.end())
     {
         cursors.erase(cursors.find(tcur->getCursorID()));
     }
+    if(numCursors == 1)
+    {
+        vel.x = -lastVel.z;
+        vel.z = lastVel.x;
+    }
 }
 
-shortint2 toWindowSpace(TUIO::TuioPoint *point)
-{
-    int nx = point->getScreenX(globalRendering->screenSizeX);
-    int ny = point->getScreenY(globalRendering->screenSizeY);
-
-    nx -= globalRendering->winPosX;
-    ny -= (globalRendering->screenSizeY - globalRendering->winPosY - globalRendering->winSizeY);
-
-    shortint2 pnt;
-    pnt.x = nx;
-    pnt.y = ny;
-
-    return pnt;
-}
-
-shortint2 clampToWindowSpace(shortint2 &pnt)
-{
-    pnt.x = max(0, (int) pnt.x);
-    pnt.x = min(globalRendering->viewSizeX, (int) pnt.x);
-
-    pnt.y = max(0, (int) pnt.y);
-    pnt.y = min(globalRendering->viewSizeY, (int )pnt.y);
-}
-
-bool isInWindowSpace(const shortint2 &pnt)
-{
-    return pnt.x > 0 && pnt.y > 0 && pnt.x < globalRendering->viewSizeX && pnt.y < globalRendering->viewSizeY;
-}
-
-void CFreeController::translate(shortint2 &last, shortint2 &now)
+float3 CFreeController::translate(shortint2 &last, shortint2 &now)
 {
     shortint2 gp = now;
     clampToWindowSpace(now);
@@ -421,11 +401,15 @@ void CFreeController::translate(shortint2 &last, shortint2 &now)
 
             dpos.y = 0;
 
-            pos -= dpos;
+            dpos = -dpos;
+
+            pos += dpos;
+
+            return dpos;
         }
 
     }
-
+    return ZeroVector;
 }
 
 void CFreeController::tuioRefresh(TUIO::TuioTime ftime)
@@ -434,9 +418,10 @@ void CFreeController::tuioRefresh(TUIO::TuioTime ftime)
 
     if(numCursors != 1)
     {
-        vel.x = 0;
-        vel.z = 0;
+        //vel.x = 0;
+        //vel.z = 0;
         lastSinglePoint.x = lastSinglePoint.y = -1;
+        lastVel = ZeroVector;
     }
     if(numCursors != 2)
     {
@@ -458,7 +443,20 @@ void CFreeController::tuioRefresh(TUIO::TuioTime ftime)
 
             if(lastSinglePoint.x > 0)
             {
-                translate(lastSinglePoint, np);
+                float seconds = ((ftime - lastTime).getTotalMilliseconds()) / 1000.0f;
+                float3 disp = translate(lastSinglePoint, np);
+                if(seconds > 0.001f)
+                {
+                    if(lastVel.x == 0 && lastVel.y == 0 && lastVel.z == 0)
+                    {
+                        lastVel = disp / (seconds / 100);
+                    }
+                    else
+                    {
+                        lastVel = lastVel * 0.9f + disp * 0.1f / (seconds / 100);
+                    }
+                }
+
             }
 
             //always change the lastSinglePort
@@ -500,7 +498,7 @@ void CFreeController::tuioRefresh(TUIO::TuioTime ftime)
             float dist = ::sqrtf(xdif * xdif + ydif * ydif);
             float curRot = -one->getAngle(two);
 
-            logOutput.Print("two %f", dist);
+            //logOutput.Print("two %f", dist);
             if(prevDist >= 0)
             {
 
@@ -540,7 +538,7 @@ void CFreeController::tuioRefresh(TUIO::TuioTime ftime)
 
                     float dRot = curRot - prevRot;
                     dRot = streflop::fmodf(dRot, M_PI * 2);
-                    float angularChangeThresh = 5.0f * M_PI / 180.0f;
+                    float angularChangeThresh = 2.0f * M_PI / 180.0f;
 
                     if(streflop::fabsf(dRot) >= angularChangeThresh && grnDist >= 0)
                     {
@@ -612,7 +610,7 @@ void CFreeController::tuioRefresh(TUIO::TuioTime ftime)
 
                     lastThreeFingerDx += usedChange;
 
-                    float rot = 1.0f / 180.0f * M_PI * usedChange / 5.0f;
+                    float rot = -1.0f / 180.0f * M_PI * usedChange / 5.0f;
 
 
 
@@ -622,11 +620,12 @@ void CFreeController::tuioRefresh(TUIO::TuioTime ftime)
 
                     // angular clamps
                     const float xRotLimit = (PI * 0.4999f);
+                    const float lowerRotLimit = -xRotLimit;
                     if (currentRot + rot > xRotLimit) {
                         rot = xRotLimit - currentRot;
                     }
-                    else if (currentRot + rot < -xRotLimit) {
-                        rot = -xRotLimit - currentRot;
+                    else if (currentRot + rot < lowerRotLimit) {
+                        rot = lowerRotLimit - currentRot;
                     }
 
                     CMatrix44f rotate;
@@ -659,6 +658,8 @@ void CFreeController::tuioRefresh(TUIO::TuioTime ftime)
         default:
         break;
     };
+
+    lastTime = ftime;
 }
 
 

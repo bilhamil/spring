@@ -89,7 +89,7 @@ void CTuioHandler::removeTuioObject(TUIO::TuioObject *tobj)
 
 void CTuioHandler::addTuioCursor(TUIO::TuioCursor *tcur)
 {
-    logOutput.Print("Add Curser:");
+    //logOutput.Print("Add Curser:");
 
     //taken from MouseHandler ....
 
@@ -147,7 +147,6 @@ void CTuioHandler::addTuioCursor(TUIO::TuioCursor *tcur)
 		}
 	}
 
-    logOutput.Print("Giving to Camera:");
 	cameraReceiving = true;
     camHandler->GetCurrentController().addTuioCursor(tcur);
 }
@@ -220,4 +219,40 @@ void CTuioHandler::unlock()
 {
     client->unlockCursorList();
     client->unlockObjectList();
+}
+
+static inline int min(int val1, int val2) {
+	return val1 < val2 ? val1 : val2;
+}
+static inline int max(int val1, int val2) {
+	return val1 > val2 ? val1 : val2;
+}
+
+shortint2 toWindowSpace(TUIO::TuioPoint *point)
+{
+    int nx = point->getScreenX(globalRendering->screenSizeX);
+    int ny = point->getScreenY(globalRendering->screenSizeY);
+
+    nx -= globalRendering->winPosX;
+    ny -= (globalRendering->screenSizeY - globalRendering->winPosY - globalRendering->winSizeY);
+
+    shortint2 pnt;
+    pnt.x = nx;
+    pnt.y = ny;
+
+    return pnt;
+}
+
+shortint2 clampToWindowSpace(shortint2 &pnt)
+{
+    pnt.x = max(0, (int) pnt.x);
+    pnt.x = min(globalRendering->viewSizeX, (int) pnt.x);
+
+    pnt.y = max(0, (int) pnt.y);
+    pnt.y = min(globalRendering->viewSizeY, (int )pnt.y);
+}
+
+bool isInWindowSpace(const shortint2 &pnt)
+{
+    return pnt.x > 0 && pnt.y > 0 && pnt.x < globalRendering->viewSizeX && pnt.y < globalRendering->viewSizeY;
 }
