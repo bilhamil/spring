@@ -61,7 +61,7 @@ static CInputReceiver*& activeReceiver = CInputReceiver::GetActiveReceiverRef();
 
 CTuioHandler::CTuioHandler(int port): activeReceivers(), refreshedReceivers(), cameraReceiving(false)
 {
-    client = new TUIO::TuioClient(port);
+    client = new SDLTuioClient(port);
     client->addTuioListener(this);
     client->connect();
 }

@@ -8,7 +8,7 @@
 #include <map>
 #include <hash_map>
 #include <hash_set>
-#include "lib/tuio/TuioClient.h"
+#include "SDLTuioClient.h"
 #include "lib/tuio/TuioObject.h"
 #include "System/myMath.h"
 
@@ -47,7 +47,7 @@ public:
     void unlock();
 
 private:
-	TUIO::TuioClient* client;
+	SDLTuioClient* client;
 	__gnu_cxx::hash_map<int, CInputReceiver*> activeReceivers;
 	__gnu_cxx::hash_set<CInputReceiver*, CInputReceiver_hash> refreshedReceivers;
 	bool cameraReceiving;

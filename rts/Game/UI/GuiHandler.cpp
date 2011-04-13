@@ -1190,11 +1190,11 @@ bool CGuiHandler::addTuioCursor(TUIO::TuioCursor *tcur)
     if(activeMousePress)
         return false;
 
-    logOutput.Print("Touch Point x: %d y: %d", x, y);
+    //logOutput.Print("Touch Point x: %d y: %d", x, y);
 
 	if (AboveGui(x,y))
 	{
-	    logOutput.Print("Touch Above Gui");
+	    //logOutput.Print("Touch Above Gui");
 		activeMousePress = true;
 		activeMousePressDevice = TOUCH;
 		if ((curIconCommand < 0) && !game->hideInterface) {

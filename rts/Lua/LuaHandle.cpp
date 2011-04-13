@@ -1707,7 +1707,7 @@ bool CLuaHandle::MouseMove(int x, int y, int dx, int dy, int button)
 
 bool CLuaHandle::AddCursor(TUIO::TuioCursor* tcur)
 {
-    /*if (!CheckModUICtrl()) {
+    if (!CheckModUICtrl()) {
 		return false;
 	}
 
@@ -1744,8 +1744,7 @@ bool CLuaHandle::AddCursor(TUIO::TuioCursor* tcur)
 	}
 	const bool retval = !!lua_toboolean(L, -1);
 	lua_pop(L, 1);
-	return retval;*/
-	return false;
+	return retval;
 }
 
 void CLuaHandle::UpdateCursor(TUIO::TuioCursor* tcur)
