@@ -52,7 +52,10 @@ private:
 	float3 prevVel;  // previous velocity
 	float3 prevAvel; // previous angular velocity
 
+    int lastNumCursors;
+    int cursorNumberFrameCount;
 	shortint2 lastSinglePoint;
+	shortint2 lastDoublePoint1, lastDoublePoint2;
 	shortint2 lastMidPoint;
 
 	TUIO::TuioTime lastTime;

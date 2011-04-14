@@ -40,7 +40,9 @@ CFreeController::CFreeController()
   trackPos(0.0f, 0.0f, 0.0f),
   trackRadius(0.0f),
   gndLock(false),
-  cursors()
+  cursors(),
+  lastNumCursors(0),
+  cursorNumberFrameCount(0)
 {
 	dir = float3(0.0f, -2.0f, -1.0f);
 	dir.ANormalize();
@@ -138,7 +140,7 @@ void CFreeController::Update()
 	}
 
 	// convert control velocity into position velocity
-	if (!tracking) {
+	/*if (!tracking) {
 		if (goForward) {
 			const float3 tmpVel((camera->forward * vel.x) +
 			                    (UpVector        * vel.y) +
@@ -153,7 +155,15 @@ void CFreeController::Update()
 			                    (camera->right * vel.z));
 			vel = tmpVel;
 		}
-	}
+	}*/
+
+    float3 forwardNoY = UpVector.cross(camera->right);//(camera->forward.x, 0.0f, camera->forward.z);
+    forwardNoY.ANormalize();
+    const float3 tmpVel((forwardNoY    * vel.x) +
+                        (UpVector      * vel.y) +
+                        (camera->right * vel.z));
+
+    vel = tmpVel;
 
 	// smooth the velocities
 	vel  =  (vel * nt)  +  (prevVel * pt);
@@ -367,8 +377,10 @@ void CFreeController::removeTuioCursor(TUIO::TuioCursor *tcur)
     }
     if(numCursors == 1)
     {
-        vel.x = -lastVel.z;
-        vel.z = lastVel.x;
+        float3 forwardNoY = UpVector.cross(camera->right);
+        vel.x = lastVel.dot(forwardNoY);
+        vel.z = lastVel.dot(camera->right);
+        vel.y = lastVel.dot(UpVector);
     }
 }
 
@@ -415,6 +427,11 @@ float3 CFreeController::translate(shortint2 &last, shortint2 &now)
 void CFreeController::tuioRefresh(TUIO::TuioTime ftime)
 {
     int numCursors = cursors.size();
+
+    if(lastNumCursors != numCursors)
+    {
+        cursorNumberFrameCount = 0;
+    }
 
     if(numCursors != 1)
     {
@@ -502,12 +519,9 @@ void CFreeController::tuioRefresh(TUIO::TuioTime ftime)
             if(prevDist >= 0)
             {
 
-
                 shortint2 mid;
                 mid.x = (oneScr.x + twoScr.x) / 2;
                 mid.y = (oneScr.y + twoScr.y) / 2;
-                float distanceUsed = 0;
-
 
                 if(isInWindowSpace(mid))
                 {
@@ -519,26 +533,37 @@ void CFreeController::tuioRefresh(TUIO::TuioTime ftime)
 
                     if(streflop::fabsf(dDist) >= changeUnit)
                     {
-                        float usedDDist = streflop::floorf(streflop::fabsf(dDist/changeUnit));
-                        if(dDist > 0)
-                        {
-                            distanceUsed = prevDist + usedDDist;
 
-                            pos += midDir * grnDist * (1.0f - std::pow(0.98f, usedDDist));
-                        }
-                        else
-                        {
-                            distanceUsed = prevDist - usedDDist;
+                        float3 midLoc = pos + midDir * grnDist;
 
-                            pos -= midDir * grnDist * (1.0f - std::pow(0.98f, usedDDist));
-                        }
+                        float3 oneDir = camera->CalcPixelDir(oneScr.x, oneScr.y).SafeNormalize();
+
+                        shortint2 oldOnePos = mid;
+                        oldOnePos.x += (oneScr.x - mid.x) * (prevDist / dist);
+                        oldOnePos.y += (oneScr.y - mid.y) * (prevDist / dist);
+
+                        float3 oldOneDir = camera->CalcPixelDir(oldOnePos.x, oldOnePos.y).SafeNormalize();
+
+                        float oneDist = grnDist / (oneDir.dot(midDir));
+                        float oldOneDist = grnDist / (oldOneDir.dot(midDir));
+
+                        float3 oneLoc = pos + oneDir * oneDist;
+                        float3 oldOneLoc = pos + oldOneDir * oldOneDist;
+
+                        float newD = (midLoc - oneLoc).Length();
+                        float oldD = (midLoc - oldOneLoc).Length();
+
+                        float newGrnDist = oldD * grnDist / newD;
+
+                        pos += midDir * (grnDist - newGrnDist);
+
                         /* update prevDist */
-                        prevDist = distanceUsed;
+                        prevDist = dist;
                     }
 
                     float dRot = curRot - prevRot;
                     dRot = streflop::fmodf(dRot, M_PI * 2);
-                    float angularChangeThresh = 2.0f * M_PI / 180.0f;
+                    float angularChangeThresh = 1.0f * M_PI / 180.0f;
 
                     if(streflop::fabsf(dRot) >= angularChangeThresh && grnDist >= 0)
                     {
@@ -619,8 +644,8 @@ void CFreeController::tuioRefresh(TUIO::TuioTime ftime)
                     float currentRot = camera->rot.x;
 
                     // angular clamps
-                    const float xRotLimit = (PI * 0.4999f);
-                    const float lowerRotLimit = -xRotLimit;
+                    const float xRotLimit = - 30.0f * PI / 180.0f;
+                    const float lowerRotLimit = -(PI * 0.4999f);
                     if (currentRot + rot > xRotLimit) {
                         rot = xRotLimit - currentRot;
                     }
@@ -660,6 +685,8 @@ void CFreeController::tuioRefresh(TUIO::TuioTime ftime)
     };
 
     lastTime = ftime;
+    lastNumCursors = numCursors;
+    cursorNumberFrameCount++;
 }
 
 
