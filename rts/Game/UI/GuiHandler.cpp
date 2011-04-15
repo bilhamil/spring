@@ -1050,8 +1050,6 @@ bool CGuiHandler::MousePress(int x, int y, int button)
 	if (button != SDL_BUTTON_LEFT && button != SDL_BUTTON_RIGHT && button != -SDL_BUTTON_RIGHT && button != -SDL_BUTTON_LEFT)
 		return false;
 
-    logOutput.Print("Mouse Point x: %d y: %d", x, y);
-
 	if (button < 0) {
 		// proxied click from the minimap
 		button = -button;

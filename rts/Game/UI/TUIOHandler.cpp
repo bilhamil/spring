@@ -57,8 +57,6 @@ extern boost::uint8_t *keys;
 
 CTuioHandler* tuio = NULL;
 
-static CInputReceiver*& activeReceiver = CInputReceiver::GetActiveReceiverRef();
-
 CTuioHandler::CTuioHandler(int port): activeReceivers(), refreshedReceivers(), cameraReceiving(false)
 {
     client = new SDLTuioClient(port);
@@ -123,6 +121,8 @@ void CTuioHandler::addTuioCursor(TUIO::TuioCursor *tcur)
 
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
+
+    logOutput.Print("Add Curser: %d", tcur->getCursorID());
 
 	if (!game->hideInterface) {
 		for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
@@ -196,7 +196,7 @@ void CTuioHandler::refresh(TUIO::TuioTime ftime)
     {
         CInputReceiver* recv = it->second;
 
-        if(refreshedReceivers.find(recv) != refreshedReceivers.end())
+        if(refreshedReceivers.find(recv) == refreshedReceivers.end())
         {
             recv->tuioRefresh(ftime);
             refreshedReceivers.insert(recv);
@@ -206,7 +206,7 @@ void CTuioHandler::refresh(TUIO::TuioTime ftime)
     if(cameraReceiving)
         camHandler->GetCurrentController().tuioRefresh(ftime);
 
-    bool cameraReceiving = false;
+    cameraReceiving = false;
 }
 
 void CTuioHandler::lock()
@@ -243,7 +243,7 @@ shortint2 toWindowSpace(TUIO::TuioPoint *point)
     return pnt;
 }
 
-shortint2 clampToWindowSpace(shortint2 &pnt)
+void clampToWindowSpace(shortint2 &pnt)
 {
     pnt.x = max(0, (int) pnt.x);
     pnt.x = min(globalRendering->viewSizeX, (int) pnt.x);

@@ -17,7 +17,7 @@ class CCameraController;
 
 /* Windowing helpers */
 shortint2 toWindowSpace(TUIO::TuioPoint *point);
-shortint2 clampToWindowSpace(shortint2 &pnt);
+void clampToWindowSpace(shortint2 &pnt);
 bool isInWindowSpace(const shortint2 &pnt);
 
 struct CInputReceiver_hash

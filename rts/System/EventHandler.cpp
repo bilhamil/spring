@@ -27,7 +27,7 @@ void CEventHandler::SetupEvent(const string& eName,
 /******************************************************************************/
 /******************************************************************************/
 
-CEventHandler::CEventHandler()
+CEventHandler::CEventHandler(): refreshedReceivers()
 {
 	mouseOwner = NULL;
 
@@ -567,11 +567,11 @@ bool CEventHandler::MouseMove(int x, int y, int dx, int dy, int button)
 bool CEventHandler::addTuioCursor(TUIO::TuioCursor *tcur)
 {
     // reverse order, user has the override
-	const int count = listMousePress.size();
+	const int count = listAddCursor.size();
 	logOutput.Print("CEventHandler::addTuioCursor: count: %d", count);
 
 	for (int i = (count - 1); i >= 0; i--) {
-		CEventClient* ec = listMousePress[i];
+		CEventClient* ec = listAddCursor[i];
 		if (ec->AddCursor(tcur)) {
 			if (!activeReceivers[tcur->getCursorID()])
 				activeReceivers[tcur->getCursorID()] = ec;
@@ -604,11 +604,13 @@ void CEventHandler::tuioRefresh(TUIO::TuioTime ftime)
 {
     __gnu_cxx::hash_map<int, CEventClient*>::const_iterator it;
 
+    refreshedReceivers.clear();
+
     for(it = activeReceivers.begin(); it != activeReceivers.end(); it++)
     {
         CEventClient* recv = it->second;
 
-        if(refreshedReceivers.find(recv) != refreshedReceivers.end())
+        if(refreshedReceivers.find(recv) == refreshedReceivers.end())
         {
             recv->RefreshCursors(ftime);
             refreshedReceivers.insert(recv);
