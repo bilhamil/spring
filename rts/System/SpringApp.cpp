@@ -80,6 +80,8 @@
 
 using std::string;
 
+SpringApp* springApp = 0;
+
 CGameController* activeController = 0;
 bool globalQuit = false;
 boost::uint8_t *keys = 0;
@@ -113,6 +115,8 @@ SpringApp::SpringApp()
 	depthBufferBits = 24;
 	windowState = 0;
 	windowPosX = windowPosY = 0;
+
+	customAlt = customCtrl = customMeta = customShift = false;
 }
 
 /**
@@ -169,7 +173,7 @@ bool SpringApp::Initialize()
 	FileSystemHandler::Initialize(true);
 
 	UpdateOldConfigs();
-	
+
 	if (!InitWindow(("Spring " + SpringVersion::Get()).c_str())) {
 		SDL_Quit();
 		return false;
@@ -1089,6 +1093,30 @@ int SpringApp::Update()
 }
 
 
+void SpringApp::SetCustomAlt(bool down)
+{
+    customAlt = down;
+    UpdateSDLKeys();
+}
+
+void SpringApp::SetCustomCtrl(bool down)
+{
+    customCtrl = down;
+    UpdateSDLKeys();
+}
+
+void SpringApp::SetCustomMeta(bool down)
+{
+    customMeta = down;
+    UpdateSDLKeys();
+}
+
+void SpringApp::SetCustomShift(bool down)
+{
+    customShift = down;
+    UpdateSDLKeys();
+}
+
 /**
  * Tests SDL keystates and sets values
  * in key array
@@ -1101,10 +1129,10 @@ void SpringApp::UpdateSDLKeys()
 	memcpy(keys, state, sizeof(boost::uint8_t) * numkeys);
 
 	const SDLMod mods = SDL_GetModState();
-	keys[SDLK_LALT]   = (mods & KMOD_ALT)   ? 1 : 0;
-	keys[SDLK_LCTRL]  = (mods & KMOD_CTRL)  ? 1 : 0;
-	keys[SDLK_LMETA]  = (mods & KMOD_META)  ? 1 : 0;
-	keys[SDLK_LSHIFT] = (mods & KMOD_SHIFT) ? 1 : 0;
+	keys[SDLK_LALT]   = ((mods & KMOD_ALT) || customAlt)  ? 1 : 0;
+	keys[SDLK_LCTRL]  = ((mods & KMOD_CTRL) || customCtrl) ? 1 : 0;
+	keys[SDLK_LMETA]  = ((mods & KMOD_META) || customMeta) ? 1 : 0;
+	keys[SDLK_LSHIFT] = ((mods & KMOD_SHIFT) || customShift) ? 1 : 0;
 }
 
 

@@ -32,6 +32,7 @@
 #include "LuaUtils.h"
 #include "LuaTextures.h"
 
+#include "System/SpringApp.h"
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Game/Camera/CameraController.h"
@@ -207,6 +208,11 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(SetBuildSpacing);
 	REGISTER_LUA_CFUNC(SetBuildFacing);
+
+    REGISTER_LUA_CFUNC(SetCustomShift);
+    REGISTER_LUA_CFUNC(SetCustomAlt);
+    REGISTER_LUA_CFUNC(SetCustomMeta);
+    REGISTER_LUA_CFUNC(SetCustomCtrl);
 
 	return true;
 }
@@ -2312,5 +2318,89 @@ int LuaUnsyncedCtrl::SetBuildFacing(lua_State* L)
 
 	return 0;
 }
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaUnsyncedCtrl::SetCustomShift(lua_State* L)
+{
+    if (!CheckModUICtrl()) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+
+	if (args != 1 || !lua_isboolean(L, 1)) {
+		luaL_error(L, "Incorrect arguments to SetCustomShift(boolean)");
+	}
+    else
+    {
+        bool pressed = lua_toboolean(L, 1);
+        springApp->SetCustomShift(pressed);
+    }
+
+    return 0;
+}
+
+int LuaUnsyncedCtrl::SetCustomAlt(lua_State* L)
+{
+    if (!CheckModUICtrl()) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+
+	if (args != 1 || !lua_isboolean(L, 1)) {
+		luaL_error(L, "Incorrect arguments to SetCustomAlt(boolean)");
+	}
+    else
+    {
+        bool pressed = lua_toboolean(L, 1);
+        springApp->SetCustomAlt(pressed);
+    }
+
+    return 0;
+}
+
+int LuaUnsyncedCtrl::SetCustomMeta(lua_State* L)
+{
+    if (!CheckModUICtrl()) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+
+	if (args != 1 || !lua_isboolean(L, 1)) {
+		luaL_error(L, "Incorrect arguments to SetCustomMeta(boolean)");
+	}
+    else
+    {
+        bool pressed = lua_toboolean(L, 1);
+        springApp->SetCustomMeta(pressed);
+    }
+
+    return 0;
+}
+
+int LuaUnsyncedCtrl::SetCustomCtrl(lua_State* L)
+{
+    if (!CheckModUICtrl()) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+
+	if (args != 1 || !lua_isboolean(L, 1)) {
+		luaL_error(L, "Incorrect arguments to SetCustomCtrl(boolean)");
+	}
+    else
+    {
+        bool pressed = lua_toboolean(L, 1);
+        springApp->SetCustomCtrl(pressed);
+    }
+
+    return 0;
+}
+
 /******************************************************************************/
 /******************************************************************************/

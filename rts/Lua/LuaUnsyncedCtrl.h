@@ -127,6 +127,11 @@ class LuaUnsyncedCtrl {
 
 		static int SetBuildSpacing(lua_State* L);
 		static int SetBuildFacing(lua_State* L);
+
+		static int SetCustomShift(lua_State* L);
+		static int SetCustomAlt(lua_State* L);
+		static int SetCustomMeta(lua_State* L);
+		static int SetCustomCtrl(lua_State* L);
 };
 
 

@@ -52,6 +52,7 @@ int Run(int argc, char* argv[])
 
 	try {
 		SpringApp app;
+		springApp = &app;
 		return app.Run(argc, argv);
 	}
 	catch (const content_error& e) {

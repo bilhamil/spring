@@ -1723,7 +1723,7 @@ bool CLuaHandle::AddCursor(TUIO::TuioCursor* tcur)
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 5);
 
-	static const LuaHashString cmdStr("AddCursor");
+	static const LuaHashString cmdStr("MainAddCursor");
 
 	if (!PushUnsyncedCallIn(cmdStr)) {
 		return false; // the call is not defined, do not take the event
@@ -1774,7 +1774,7 @@ void CLuaHandle::UpdateCursor(TUIO::TuioCursor* tcur)
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 7);
 
-	static const LuaHashString cmdStr("UpdateCursor");
+	static const LuaHashString cmdStr("MainUpdateCursor");
 
 	if (!PushUnsyncedCallIn(cmdStr)) {
 		return; // the call is not defined, do not take the event
@@ -1819,7 +1819,7 @@ void CLuaHandle::RemoveCursor(TUIO::TuioCursor* tcur)
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 7);
 
-	static const LuaHashString cmdStr("RemoveCursor");
+	static const LuaHashString cmdStr("MainRemoveCursor");
 
 	if (!PushUnsyncedCallIn(cmdStr)) {
 		return; // the call is not defined, do not take the event
@@ -1848,7 +1848,7 @@ void CLuaHandle::RefreshCursors(TUIO::TuioTime ftime)
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 3);
 
-	static const LuaHashString cmdStr("RefreshCursors");
+	static const LuaHashString cmdStr("MainRefreshCursors");
 
 	if (!PushUnsyncedCallIn(cmdStr)) {
 		return; // the call is not defined, do not take the event

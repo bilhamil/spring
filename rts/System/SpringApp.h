@@ -23,6 +23,11 @@ public:
 
 	int Run(int argc, char *argv[]);                //!< Run game loop
 
+    void SetCustomAlt(bool down);                   //!< Simulate Alt Push
+    void SetCustomCtrl(bool down);                  //!< Simulate Ctrl Push
+    void SetCustomMeta(bool down);                  //!< Simulate Meta Push
+    void SetCustomShift(bool down);                 //!< Simulate Shift Push
+
 protected:
 	bool Initialize();                              //!< Initialize app
 	void ParseCmdLine();                            //!< Parse command line
@@ -43,6 +48,7 @@ protected:
 #endif
 
 	void UpdateSDLKeys();                           //!< Update SDL key array
+
 	bool GetDisplayGeometry();
 	void SetupViewportGeometry();
 
@@ -112,8 +118,15 @@ protected:
 	 */
 	int lastRequiredDraw;
 
+
+
 private:
 	bool MainEventHandler(const SDL_Event& ev);
+
+	bool customShift;
+	bool customAlt;
+	bool customMeta;
+	bool customCtrl;
 };
 
 /**
@@ -145,5 +158,12 @@ extern boost::uint8_t *keys;
  * Unicode character for the current KeyPressed or KeyReleased
  */
 extern boost::uint16_t currentUnicode;
+
+/**
+ * @brief currentUnicode
+ *
+ * Unicode character for the current KeyPressed or KeyReleased
+ */
+extern SpringApp* springApp;
 
 #endif

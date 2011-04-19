@@ -196,7 +196,7 @@ void CTuioHandler::refresh(TUIO::TuioTime ftime)
     {
         CInputReceiver* recv = it->second;
 
-        if(refreshedReceivers.find(recv) == refreshedReceivers.end())
+        if(recv && refreshedReceivers.find(recv) == refreshedReceivers.end())
         {
             recv->tuioRefresh(ftime);
             refreshedReceivers.insert(recv);
