@@ -85,7 +85,8 @@ CGuiHandler::CGuiHandler():
 	actionOffset(0),
 	drawSelectionInfo(true),
 	hasLuaUILayoutCommands(false),
-	gatherMode(false)
+	gatherMode(false),
+	defaultCommandOveride(false)
 {
 	icons = new IconInfo[16];
 	iconsSize = 16;
@@ -1087,7 +1088,7 @@ bool CGuiHandler::MousePress(int x, int y, int button)
 		return true;
 	}
 
-	if (button == SDL_BUTTON_RIGHT) {
+	if (button == SDL_BUTTON_RIGHT || defaultCommandOveride) {
 		activeMousePress = true;
 		activeMousePressDevice = MOUSE;
 		defaultCmdMemory = GetDefaultCommand(x, y);
@@ -1141,10 +1142,11 @@ void CGuiHandler::MouseRelease(int x, int y, int button, float3& camerapos, floa
 		}
 	}
 
-	if ((button == SDL_BUTTON_RIGHT) && (iconCmd == -1)) {
+	if ((button == SDL_BUTTON_RIGHT || defaultCommandOveride) && (iconCmd == -1)) {
 		// right click -> set the default cmd
 		inCommand = defaultCmdMemory;
 		defaultCmdMemory = -1;
+		logOutput.Print("DefaultCmdMemory");
 	}
 
 	if ((iconCmd >= 0) && ((size_t)iconCmd < commands.size())) {
@@ -1154,6 +1156,7 @@ void CGuiHandler::MouseRelease(int x, int y, int button, float3& camerapos, floa
 	}
 
 	// not over a button, try to execute a command
+	logOutput.Print("GetCommand(x,y)");
 	Command c = GetCommand(x, y, button, false, camerapos, mousedir);
 
 	if (c.id == CMD_FAILED) { // indicates we should not finish the current command
@@ -1171,7 +1174,7 @@ void CGuiHandler::MouseRelease(int x, int y, int button, float3& camerapos, floa
 
 bool CGuiHandler::addTuioCursor(TUIO::TuioCursor *tcur)
 {
-    shortint2 pos = toWindowSpace(tcur);
+    /*shortint2 pos = toWindowSpace(tcur);
 
     if(! isInWindowSpace(pos))
     {
@@ -1220,7 +1223,7 @@ bool CGuiHandler::addTuioCursor(TUIO::TuioCursor *tcur)
 		activeMousePress = true;
 		activeMousePressDevice = TOUCH;
 		return true;
-	}
+	}*/
 
 	return false;
 }
@@ -1232,7 +1235,7 @@ void CGuiHandler::updateTuioCursor(TUIO::TuioCursor *tcur)
 
 void CGuiHandler::removeTuioCursor(TUIO::TuioCursor *tcur)
 {
-    shortint2 pos = toWindowSpace(tcur);
+    /*shortint2 pos = toWindowSpace(tcur);
 
     if(!isInWindowSpace(pos))
     {
@@ -1301,7 +1304,7 @@ void CGuiHandler::removeTuioCursor(TUIO::TuioCursor *tcur)
 		lastKeySet.Reset();
 	}
 
-	FinishCommand(button);
+	FinishCommand(button);*/
 }
 
 bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rmb)
@@ -2241,8 +2244,10 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 		// (in preview we might not have default cmd memory set)
 		if (mouse->buttons[SDL_BUTTON_RIGHT].pressed) {
 			tempInCommand = defaultCmdMemory;
+			logOutput.Print("using defaultCmdMemory");
 		} else {
 			tempInCommand = GetDefaultCommand(mousex, mousey, camerapos, mousedir);
+			logOutput.Print("querying default command");
 		}
 	}
 
@@ -3632,6 +3637,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 						}
 						const float3 pos2 = camerapos+mousedir*dist;
 						if (!onMinimap) {
+
 							DrawSelectBox(pos1, pos2, camerapos);
 						} else {
 							glColor4f(1.0f, 0.0f, 0.0f, 0.5f);

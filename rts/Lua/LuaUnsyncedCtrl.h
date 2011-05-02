@@ -132,6 +132,7 @@ class LuaUnsyncedCtrl {
 		static int SetCustomAlt(lua_State* L);
 		static int SetCustomMeta(lua_State* L);
 		static int SetCustomCtrl(lua_State* L);
+		static int SetDefaultCmd(lua_State* L);
 };
 
 

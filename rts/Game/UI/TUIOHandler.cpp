@@ -122,7 +122,7 @@ void CTuioHandler::addTuioCursor(TUIO::TuioCursor *tcur)
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
 
-    logOutput.Print("Add Curser: %d", tcur->getCursorID());
+    //logOutput.Print("Add Curser: %d", tcur->getCursorID());
 
 	if (!game->hideInterface) {
 		for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {

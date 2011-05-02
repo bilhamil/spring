@@ -90,6 +90,7 @@ public:
 	int inCommand;
 	int buildFacing;
 	int buildSpacing;
+	bool defaultCommandOveride;
 
 private:
 	void GiveCommand(const Command& cmd, bool fromUser = true) const;

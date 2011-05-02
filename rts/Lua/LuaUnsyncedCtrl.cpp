@@ -214,6 +214,8 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
     REGISTER_LUA_CFUNC(SetCustomMeta);
     REGISTER_LUA_CFUNC(SetCustomCtrl);
 
+    REGISTER_LUA_CFUNC(SetDefaultCmd);
+
 	return true;
 }
 
@@ -2401,6 +2403,27 @@ int LuaUnsyncedCtrl::SetCustomCtrl(lua_State* L)
 
     return 0;
 }
+
+int LuaUnsyncedCtrl::SetDefaultCmd(lua_State* L)
+{
+    if (!CheckModUICtrl()) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+
+	if (args != 1 || !lua_isboolean(L, 1)) {
+		luaL_error(L, "Incorrect arguments to SetDefaultCmd(boolean)");
+	}
+    else
+    {
+        bool pressed = lua_toboolean(L, 1);
+        guihandler->defaultCommandOveride = pressed;
+    }
+
+    return 0;
+}
+
 
 /******************************************************************************/
 /******************************************************************************/
