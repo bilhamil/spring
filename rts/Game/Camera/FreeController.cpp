@@ -464,14 +464,14 @@ void CFreeController::tuioRefresh(TUIO::TuioTime ftime)
                 float3 disp = translate(lastSinglePoint, np);
                 if(seconds > 0.001f)
                 {
-                    if(lastVel.x == 0 && lastVel.y == 0 && lastVel.z == 0)
+                    /*if(lastVel.x == 0 && lastVel.y == 0 && lastVel.z == 0)
                     {
                         lastVel = disp / (seconds / 100);
                     }
                     else
-                    {
-                        lastVel = lastVel * 0.9f + disp * 0.1f / (seconds / 100);
-                    }
+                    {*/
+                        lastVel = lastVel * 0.66f + disp * 0.33f / (seconds / 100);
+                    //}
                 }
 
             }

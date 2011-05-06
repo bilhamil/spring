@@ -1156,7 +1156,7 @@ void CGuiHandler::MouseRelease(int x, int y, int button, float3& camerapos, floa
 	}
 
 	// not over a button, try to execute a command
-	logOutput.Print("GetCommand(x,y)");
+	//logOutput.Print("GetCommand(x,y)");
 	Command c = GetCommand(x, y, button, false, camerapos, mousedir);
 
 	if (c.id == CMD_FAILED) { // indicates we should not finish the current command
@@ -2244,10 +2244,10 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 		// (in preview we might not have default cmd memory set)
 		if (mouse->buttons[SDL_BUTTON_RIGHT].pressed) {
 			tempInCommand = defaultCmdMemory;
-			logOutput.Print("using defaultCmdMemory");
+			//logOutput.Print("using defaultCmdMemory");
 		} else {
 			tempInCommand = GetDefaultCommand(mousex, mousey, camerapos, mousedir);
-			logOutput.Print("querying default command");
+			//logOutput.Print("querying default command");
 		}
 	}
 

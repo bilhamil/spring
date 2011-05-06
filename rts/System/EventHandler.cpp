@@ -568,7 +568,7 @@ bool CEventHandler::addTuioCursor(TUIO::TuioCursor *tcur)
 {
     // reverse order, user has the override
 	const int count = listAddCursor.size();
-	logOutput.Print("CEventHandler::addTuioCursor: count: %d", count);
+	//logOutput.Print("CEventHandler::addTuioCursor: count: %d", count);
 
 	for (int i = (count - 1); i >= 0; i--) {
 		CEventClient* ec = listAddCursor[i];
