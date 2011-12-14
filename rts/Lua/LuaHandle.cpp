@@ -2388,7 +2388,7 @@ bool CLuaHandle::MouseMove(int x, int y, int dx, int dy, int button)
 	return retval;
 }
 
-bool CLuaHandle::AddCursor(TUIO::TuioCursor* tcur)
+bool CLuaHandle::AddTouch(TUIO::TuioCursor* tcur)
 {
     if (!CheckModUICtrl()) {
 		return false;
@@ -2406,7 +2406,7 @@ bool CLuaHandle::AddCursor(TUIO::TuioCursor* tcur)
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 5);
 
-	static const LuaHashString cmdStr("MainAddCursor");
+	static const LuaHashString cmdStr("AddTouch");
 
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return false; // the call is not defined, do not take the event
@@ -2430,7 +2430,7 @@ bool CLuaHandle::AddCursor(TUIO::TuioCursor* tcur)
 	return retval;
 }
 
-void CLuaHandle::UpdateCursor(TUIO::TuioCursor* tcur)
+void CLuaHandle::UpdateTouch(TUIO::TuioCursor* tcur)
 {
      if (!CheckModUICtrl()) {
 		return;
@@ -2457,7 +2457,7 @@ void CLuaHandle::UpdateCursor(TUIO::TuioCursor* tcur)
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 7);
 
-	static const LuaHashString cmdStr("MainUpdateCursor");
+	static const LuaHashString cmdStr("UpdateTouch");
 
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return; // the call is not defined, do not take the event
@@ -2475,7 +2475,7 @@ void CLuaHandle::UpdateCursor(TUIO::TuioCursor* tcur)
 	}
 }
 
-void CLuaHandle::RemoveCursor(TUIO::TuioCursor* tcur)
+void CLuaHandle::RemoveTouch(TUIO::TuioCursor* tcur)
 {
     if (!CheckModUICtrl()) {
 		return;
@@ -2502,7 +2502,7 @@ void CLuaHandle::RemoveCursor(TUIO::TuioCursor* tcur)
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 7);
 
-	static const LuaHashString cmdStr("MainRemoveCursor");
+	static const LuaHashString cmdStr("RemoveTouch");
 
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return; // the call is not defined, do not take the event
@@ -2520,7 +2520,7 @@ void CLuaHandle::RemoveCursor(TUIO::TuioCursor* tcur)
 	}
 }
 
-void CLuaHandle::RefreshCursors(TUIO::TuioTime ftime)
+void CLuaHandle::RefreshTouches(TUIO::TuioTime ftime)
 {
     float seconds = ftime.getTotalMilliseconds() / 1000.0f;
 
@@ -2531,7 +2531,7 @@ void CLuaHandle::RefreshCursors(TUIO::TuioTime ftime)
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 3);
 
-	static const LuaHashString cmdStr("MainRefreshCursors");
+	static const LuaHashString cmdStr("RefreshTouches");
 
 	if (!PushUnsyncedCallIn(L, cmdStr)) {
 		return; // the call is not defined, do not take the event
