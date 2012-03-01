@@ -63,6 +63,7 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/Platform/Watchdog.h"
 #include "System/Platform/WindowManagerHelper.h"
+#include "System/Input/KeyInput.h"
 
 #include <boost/cstdint.hpp>
 #include "System/Platform/Misc.h"
@@ -191,6 +192,8 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SendLuaGaiaMsg);
 	REGISTER_LUA_CFUNC(SendLuaRulesMsg);
 
+    REGISTER_LUA_CFUNC(SetModKeyStateHack);
+
 	REGISTER_LUA_CFUNC(SetActiveCommand);
 
 	REGISTER_LUA_CFUNC(ForceLayoutUpdate);
@@ -282,7 +285,7 @@ static inline CProjectile* ParseRawProjectile(lua_State* L, const char* caller, 
 	} else {
 		pp = ph->GetMapPairByUnsyncedID(projID);
 	}
-	
+
 	return (pp) ? pp->first : NULL;
 }
 
@@ -1812,6 +1815,37 @@ int LuaUnsyncedCtrl::SendCommands(lua_State* L)
 	return 0;
 }
 
+/***********************Mod Key Hack By Bilhamil******************************/
+int LuaUnsyncedCtrl::SetModKeyStateHack(lua_State* L)
+{
+	if (!CheckModUICtrl()) {
+		return 0;
+	}
+	if (guihandler == NULL) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+
+	//alt, ctrl, meta, shift
+	if ((args < 4) ||
+	    !lua_isboolean(L, 1) || !lua_isboolean(L, 2) || !lua_isboolean(L, 3) ||
+	    !lua_isboolean(L, 4) ) {
+		luaL_error(L, "Incorrect arguments to SetActiveCommand()");
+	}
+
+	const bool alt   = lua_toboolean(L, 1);
+	const bool ctrl  = lua_toboolean(L, 2);
+	const bool meta  = lua_toboolean(L, 3);
+	const bool shift = lua_toboolean(L, 4);
+
+	keyInput->SetKeyState(SDLK_LALT,   alt);
+    keyInput->SetKeyState(SDLK_LCTRL,  ctrl);
+	keyInput->SetKeyState(SDLK_LMETA,  meta);
+	keyInput->SetKeyState(SDLK_LSHIFT, shift);
+
+	lua_pushboolean(L, true);
+	return 1;
+}
 
 /******************************************************************************/
 
@@ -1941,7 +1975,7 @@ int LuaUnsyncedCtrl::SetMouseCursor(lua_State* L)
 
 	const std::string& cursorName = luaL_checkstring(L, 1);
 	const float cursorScale = luaL_optfloat(L, 2, 1.0f);
-	
+
 	mouse->ChangeCursor(cursorName, cursorScale);
 
 	return 0;
